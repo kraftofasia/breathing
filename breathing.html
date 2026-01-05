@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thực hành Thở 4-7-8</title>
+    <style>
+        body {
+            background-color: #2c3e50; color: white;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; margin: 0; font-family: 'Segoe UI', sans-serif;
+        }
+        .container { text-align: center; width: 350px; }
+        .circle-container {
+            position: relative; width: 250px; height: 250px; margin: 30px auto;
+        }
+        .circle {
+            background-color: #1abc9c; width: 100%; height: 100%;
+            border-radius: 50%; transition: all 1s ease-in-out;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        }
+        .grow { transform: scale(1.2); }
+        .hold { transform: scale(1.2); }
+        .shrink { transform: scale(0.8); }
+        #text {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem; font-weight: bold; text-align: center;
+        }
+        /* Thanh tiến trình tối ưu */
+        .progress-container {
+            width: 100%; height: 6px; background-color: #34495e;
+            border-radius: 3px; margin: 20px 0; overflow: hidden; display: none;
+        }
+        #progress-bar {
+            width: 0%; height: 100%; background-color: #3498db;
+            /* Cực kỳ quan trọng: linear giúp chạy đều không khựng */
+            transition: width 0s linear; 
+        }
+        .controls { margin-bottom: 20px; }
+        input { padding: 8px; width: 50px; border-radius: 5px; border: none; text-align: center; }
+        button {
+            padding: 12px 30px; font-size: 1.1rem; cursor: pointer;
+            border: none; border-radius: 25px; background-color: #1abc9c; color: white;
+        }
+        button:disabled { background-color: #7f8c8d; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Thở 4-7-8</h1>
+        <div class="controls" id="settings">
+            <label>Số nhịp thở:</label>
+            <input type="number" id="cycles" value="4" min="1">
+        </div>
+
+        <div class="circle-container">
+            <div class="circle" id="circle"></div>
+            <p id="text">Sẵn sàng?</p>
+        </div>
+
+        <div class="progress-container" id="p-container">
+            <div id="progress-bar"></div>
+        </div>
+
+        <button id="start-btn">Bắt đầu</button>
+        <p id="counter"></p>
+    </div>
+
+    <script>
+        const circle = document.getElementById('circle');
+        const text = document.getElementById('text');
+        const btn = document.getElementById('start-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.getElementById('p-container');
+
+        // Hàm đếm ngược số hiển thị (vẫn chạy theo giây)
+        function updateCountdown(seconds) {
+            let counter = seconds;
+            const interval = setInterval(() => {
+                counter--;
+                if (counter >= 0) {
+                    const currentStatus = text.innerText.split('\n')[0];
+                    text.innerText = `${currentStatus}\n(${counter}s)`;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 1000);
+        }
+
+        async function runStage(msg, animationClass, color, duration) {
+            // Reset thanh tiến trình về 0 ngay lập tức (transition = 0s)
+            progressBar.style.transition = 'none';
+            progressBar.style.width = '0%';
+            
+            // Ép trình duyệt nhận diện việc reset (reflow)
+            void progressBar.offsetWidth;
+
+            // Thiết lập trạng thái mới
+            text.innerText = `${msg}\n(${duration}s)`;
+            circle.className = `circle ${animationClass}`;
+            circle.style.backgroundColor = color;
+            circle.style.transition = `all ${duration}s ease-in-out`;
+
+            // Bắt đầu chạy thanh tiến trình êm ái
+            progressBar.style.backgroundColor = color;
+            progressBar.style.transition = `width ${duration}s linear`;
+            progressBar.style.width = '100%';
+
+            updateCountdown(duration);
+            await new Promise(r => setTimeout(r, duration * 1000));
+        }
+
+        async function startBreathing() {
+            const total = parseInt(document.getElementById('cycles').value);
+            btn.disabled = true;
+            document.getElementById('settings').style.opacity = '0.3';
+            progressContainer.style.display = 'block';
+
+            for (let i = 1; i <= total; i++) {
+                document.getElementById('counter').innerText = `Nhịp: ${i} / ${total}`;
+                await runStage('Hít vào', 'grow', '#1abc9c', 4);
+                await runStage('Nín thở', 'hold', '#f1c40f', 7);
+                await runStage('Thở ra', 'shrink', '#e74c3c', 8);
+            }
+
+            text.innerText = 'Hoàn thành!';
+            circle.className = 'circle';
+            progressContainer.style.display = 'none';
+            btn.disabled = false;
+        }
+
+        btn.addEventListener('click', startBreathing);
+    </script>
+</body>
+</html>
